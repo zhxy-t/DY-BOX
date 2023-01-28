@@ -529,7 +529,7 @@ public class PlayActivity extends BaseActivity {
                     mVideoView.release();
                
                     if (finalUrl != null) {
-                           videoURL = url;
+                          // videoURL = url;
                         try {
                             int playerType = mVodPlayerCfg.getInt("pl");
                             if (playerType >= 10) {
