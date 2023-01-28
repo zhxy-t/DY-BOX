@@ -22,8 +22,8 @@ echo "RELEASE_KEY_PASSWORD=TVBoxOSC" >>$CURRENT_DIR/$DIR/gradle.properties
 
 //点播界面
 cp $CURRENT_DIR/DIY2/J/点播/VodController.java             $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/player/controller/VodController.java
-#cp $CURRENT_DIR/DIY2/J/点播/PlayActivity.java             $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/activity/PlayActivity.java
-#cp $CURRENT_DIR/DIY2/J/点播/PlayFragment.java             $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/fragment/PlayFragment.java
+cp $CURRENT_DIR/DIY2/J/点播/PlayActivity.java             $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/activity/PlayActivity.java
+cp $CURRENT_DIR/DIY2/J/点播/PlayFragment.java             $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/fragment/PlayFragment.java
 
 cp $CURRENT_DIR/DIY2/J/点播/player_vod_control_view.xml    $CURRENT_DIR/$DIR/app/src/main/res/layout/player_vod_control_view.xml
 cp $CURRENT_DIR/DIY2/J/点播/play_mobile_center_shape.xml   $CURRENT_DIR/$DIR/app/src/main/res/drawable/play_mobile_center_shape.xml
