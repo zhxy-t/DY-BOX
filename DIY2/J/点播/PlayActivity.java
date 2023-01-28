@@ -822,8 +822,60 @@ public class PlayActivity extends BaseActivity {
     private JSONObject mVodPlayerCfg;
     private String sourceKey;
     private SourceBean sourceBean;
+      
+     private void playNext(boolean inProgress) {
+        boolean hasNext = true;
+        if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
+            hasNext = false;
+        } else {
+            if (mVodInfo.reverseSort) {
+                hasNext = mVodInfo.playIndex - 1 >= 0;
+            } else {
+                hasNext = mVodInfo.playIndex + 1 < mVodInfo.seriesMap.get(mVodInfo.playFlag).size();
+            }
+        }
+        if (!hasNext) {
+            Toast.makeText(this, "已经是最后一集了", Toast.LENGTH_SHORT).show();
+            // takagen99: To auto go back to Detail Page after last episode
+            if (inProgress) {
+                this.finish();
+            }
+            return;
+        }
+        if (mVodInfo.reverseSort) {
+            mVodInfo.playIndex--;
+        } else {
+            mVodInfo.playIndex++;
+        }
+        play(false);
+    }
 
-  private void playNext(boolean isProgress) {
+    private void playPrevious() {
+        boolean hasPre = true;
+        if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
+            hasPre = false;
+        } else {
+            if (mVodInfo.reverseSort) {
+                hasPre = mVodInfo.playIndex + 1 < mVodInfo.seriesMap.get(mVodInfo.playFlag).size();
+            } else {
+                hasPre = mVodInfo.playIndex - 1 >= 0;
+            }
+        }
+        if (!hasPre) {
+            Toast.makeText(this, "已经是第一集了", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        if (mVodInfo.reverseSort) {
+            mVodInfo.playIndex++;
+        } else {
+            mVodInfo.playIndex--;
+        }
+        play(false);
+    } 
+      
+      
+      
+      /*
         boolean hasNext = true;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
             hasNext = false;
@@ -872,7 +924,7 @@ public class PlayActivity extends BaseActivity {
         }
         play(false);
     }
-    
+    */
     private int autoRetryCount = 0;
 
     boolean autoRetry() {
