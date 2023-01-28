@@ -20,14 +20,17 @@ echo "RELEASE_KEY_ALIAS=TVBoxOSC" >>$CURRENT_DIR/$DIR/gradle.properties
 echo "RELEASE_STORE_PASSWORD=TVBoxOSC" >>$CURRENT_DIR/$DIR/gradle.properties
 echo "RELEASE_KEY_PASSWORD=TVBoxOSC" >>$CURRENT_DIR/$DIR/gradle.properties
 
-//播放界面
-cp $CURRENT_DIR/DIY2/J/播放/player_vod_control_view.xml    $CURRENT_DIR/$DIR/app/src/main/res/layout/player_vod_control_view.xml
-cp $CURRENT_DIR/DIY2/J/播放/VodController.java             $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/player/controller/VodController.java
-cp $CURRENT_DIR/DIY2/J/播放/play_mobile_center_shape.xml   $CURRENT_DIR/$DIR/app/src/main/res/drawable/play_mobile_center_shape.xml
-#cp $CURRENT_DIR/DIY2/J/播放/shape_dialog_top_bg.xml        $CURRENT_DIR/$DIR/app/src/main/res/drawable/shape_dialog_top_bg.xml
-cp $CURRENT_DIR/DIY2/J/播放/box_controller_bottom_bg.xml       $CURRENT_DIR/$DIR/app/src/main/res/drawable/box_controller_bottom_bg.xml
-cp $CURRENT_DIR/DIY2/J/播放/box_controller_top_bg.xml       $CURRENT_DIR/$DIR/app/src/main/res/drawable/box_controller_top_bg.xml
-cp $CURRENT_DIR/DIY2/J/播放/button_detail_collect.xml       $CURRENT_DIR/$DIR/app/src/main/res/drawable/button_detail_collect.xml
+//点播界面
+cp $CURRENT_DIR/DIY2/J/点播/VodController.java             $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/player/controller/VodController.java
+cp $CURRENT_DIR/DIY2/J/点播/PlayActivity.java             $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/activity/PlayActivity.java
+cp $CURRENT_DIR/DIY2/J/点播/PlayFragment.java             $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/fragment/PlayFragment.java
+
+cp $CURRENT_DIR/DIY2/J/点播/player_vod_control_view.xml    $CURRENT_DIR/$DIR/app/src/main/res/layout/player_vod_control_view.xml
+cp $CURRENT_DIR/DIY2/J/点播/play_mobile_center_shape.xml   $CURRENT_DIR/$DIR/app/src/main/res/drawable/play_mobile_center_shape.xml
+#cp $CURRENT_DIR/DIY2/J/点播/shape_dialog_top_bg.xml        $CURRENT_DIR/$DIR/app/src/main/res/drawable/shape_dialog_top_bg.xml
+cp $CURRENT_DIR/DIY2/J/点播/box_controller_bottom_bg.xml       $CURRENT_DIR/$DIR/app/src/main/res/drawable/box_controller_bottom_bg.xml
+cp $CURRENT_DIR/DIY2/J/点播/box_controller_top_bg.xml       $CURRENT_DIR/$DIR/app/src/main/res/drawable/box_controller_top_bg.xml
+cp $CURRENT_DIR/DIY2/J/点播/button_detail_collect.xml       $CURRENT_DIR/$DIR/app/src/main/res/drawable/button_detail_collect.xml
 //设置界面
 cp $CURRENT_DIR/DIY2/J/设置/ModelSettingFragment.java    $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/fragment/ModelSettingFragment.java
 cp $CURRENT_DIR/DIY2/J/设置/fragment_model.xml           $CURRENT_DIR/$DIR/app/src/main/res/layout/fragment_model.xml
@@ -38,8 +41,8 @@ cp $CURRENT_DIR/DIY2/dialog_version.xml $CURRENT_DIR/$DIR/app/src/main/res/layou
 cp $CURRENT_DIR/DIY2/J/设置/ApiConfig.java           $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/api/ApiConfig.java
 cp $CURRENT_DIR/DIY2/J/设置/ApiDialog.java           $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/dialog/ApiDialog.java
 cp $CURRENT_DIR/DIY2/J/设置/dialog_api.xml           $CURRENT_DIR/$DIR/app/src/main/res/layout/dialog_api.xml
-cp $CURRENT_DIR/DIY2/J/设置/LivePlayActivity.java    $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/activity/LivePlayActivity.java
 cp $CURRENT_DIR/DIY2/J/设置/SettingActivity.java    $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/activity/SettingActivity.java
+cp $CURRENT_DIR/DIY2/J/直播/LivePlayActivity.java    $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/osc/ui/activity/LivePlayActivity.java
 #cp $CURRENT_DIR/DIY2/J/build.gradle    $CURRENT_DIR/$DIR/app/build.gradle
 
 //首页顶部修改
@@ -67,6 +70,7 @@ cp $CURRENT_DIR/DIY2/J/小窗/activity_detail.xml            $CURRENT_DIR/$DIR/a
 cp $CURRENT_DIR/DIY2/J/fragment_grid.xml            $CURRENT_DIR/$DIR/app/src/main/res/layout/fragment_grid.xml
 
 //直播修改
+
 cp $CURRENT_DIR/DIY2/J/直播/activity_live_play.xml           $CURRENT_DIR/$DIR/app/src/main/res/layout/activity_live_play.xml
 
 //增加参数
