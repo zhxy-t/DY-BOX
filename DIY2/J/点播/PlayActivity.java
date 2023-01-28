@@ -842,25 +842,34 @@ public class PlayActivity extends BaseActivity {
             }
             return;
         }
-        if (mVodInfo.reverseSort) {
+      if (mVodInfo.reverseSort) {
             mVodInfo.playIndex--;
         } else {
             mVodInfo.playIndex++;
         }
         play(false);
     }
+
     private void playPrevious() {
         boolean hasPre = true;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
             hasPre = false;
         } else {
-            hasPre = mVodInfo.playIndex - 1 >= 0;
+            if (mVodInfo.reverseSort) {
+                hasPre = mVodInfo.playIndex + 1 < mVodInfo.seriesMap.get(mVodInfo.playFlag).size();
+            } else {
+                hasPre = mVodInfo.playIndex - 1 >= 0;
+            }
         }
         if (!hasPre) {
-            Toast.makeText(this, "已经是第一集了!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "已经是第一集了", Toast.LENGTH_SHORT).show();
             return;
         }
-        mVodInfo.playIndex--;
+        if (mVodInfo.reverseSort) {
+            mVodInfo.playIndex++;
+        } else {
+            mVodInfo.playIndex--;
+        }
         play(false);
     }
     
