@@ -800,16 +800,14 @@ private String videoURL;
         if (!hasNext) {
             Toast.makeText(requireContext(), "已经是最后一集了!", Toast.LENGTH_SHORT).show();
               // takagen99: 在最后一集之后自动回到详细页面
-            if (inProgress) {
+        if (isProgress) {
                 ((DetailActivity) mActivity).toggleFullPreview();
             }
             return;
-        }else {
-            mVodInfo.playIndex++;
         }
+        mVodInfo.playIndex++;
         play(false);
     }
-
     private void playPrevious() {
         boolean hasPre = true;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
