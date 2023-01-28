@@ -1809,7 +1809,7 @@ public class LivePlayActivity extends BaseActivity {
                 && !isPasswordConfirmed(groupIndex);
     }
 
-    private boolean isPasswordConfirmed(int groupIndex) {
+  private boolean isPasswordConfirmed(int groupIndex) {
         if (Hawk.get(HawkConfig.LIVE_SKIP_PASSWORD, false)) {
             return true;
         } else {
@@ -1818,8 +1818,8 @@ public class LivePlayActivity extends BaseActivity {
                     return true;
             }
             return false;
+        }
     }
-
     
     
     private ArrayList<LiveChannelItem> getLiveChannels(int groupIndex) {
