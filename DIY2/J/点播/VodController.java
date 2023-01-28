@@ -370,6 +370,16 @@ public class VodController extends BaseController {
                 mControlWrapper.startFadeOut();
             }
         });
+         
+         // Text : 分享到其他应用程序 -------------------------------------
+        mPlayTitle.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                FastClickCheckUtil.check(view);
+                listener.openVideo();
+            }
+        });
+         
         /*
         mPlayerRetry.setOnClickListener(new OnClickListener() {
             @Override
@@ -871,6 +881,8 @@ public class VodController extends BaseController {
         void selectSubtitle();
 
         void selectAudioTrack();
+         
+       void openVideo();
     }
 
     public void setListener(VodControlListener listener) {
