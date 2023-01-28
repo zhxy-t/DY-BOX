@@ -189,12 +189,24 @@ public class PlayActivity extends BaseActivity {
                 if (rmProgress && preProgressKey != null)
                     CacheManager.delete(MD5.string2MD5(preProgressKey), 0);
             }
-
+        //taka
             @Override
             public void playPre() {
-                PlayActivity.this.playPrevious(false);
+              if (mVodInfo.reverseSort) {
+                    PlayActivity.this.playNext(false);
+                } else {
+                    PlayActivity.this.playPrevious();
+                }
+                selectMyAudioTrack();
             }
-
+            
+                  //taka
+                @Override
+            public void openVideo() {
+                openMyVideo();
+            }
+            
+            
             @Override
             public void changeParse(ParseBean pb) {
                 autoRetryCount = 0;
@@ -231,11 +243,7 @@ public class PlayActivity extends BaseActivity {
             public void selectAudioTrack() {
                 selectMyAudioTrack();
             }
-      //taka
-                @Override
-            public void openVideo() {
-                openMyVideo();
-            }
+
           
             @Override
             public void prepared() {
@@ -702,43 +710,28 @@ public class PlayActivity extends BaseActivity {
         mController.setPlayerConfig(mVodPlayerCfg);
     }
 
-    @Override
-    public void onBackPressed() {
-        if (mController.onBackPressed()) {
-            return;
-        }
-        super.onBackPressed();
-    }
+    
+    /*
+     // takagen99 : 增加检查外部播放是否进入PIP
+    private boolean extPlay = false;
+    boolean PIP = Hawk.get(HawkConfig.PIC_IN_PIC, false);
 
     @Override
-    public boolean dispatchKeyEvent(KeyEvent event) {
-        if (event != null) {
-            if (mController.onKeyEvent(event)) {
-                return true;
-            }
+    public void onUserLeaveHint() {
+        if (supportsPiPMode() && !extPlay && PIP) {
+            List<RemoteAction> actions = new ArrayList<>();
+            actions.add(generateRemoteAction(android.R.drawable.ic_media_previous, PIP_BOARDCAST_ACTION_PREV, "Prev", "Play Previous"));
+            actions.add(generateRemoteAction(android.R.drawable.ic_media_play, PIP_BOARDCAST_ACTION_PLAYPAUSE, "Play/Pause", "Play or Pause"));
+            actions.add(generateRemoteAction(android.R.drawable.ic_media_next, PIP_BOARDCAST_ACTION_NEXT, "Next", "Play Next"));
+            PictureInPictureParams params = new PictureInPictureParams.Builder()
+                    .setActions(actions).build();
+            enterPictureInPictureMode(params);
+            mController.hideBottom();
         }
-        return super.dispatchKeyEvent(event);
+        super.onUserLeaveHint();
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (mVideoView != null) {
-            mVideoView.resume();
-        }
-    }
-
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if (mVideoView != null) {
-            mVideoView.pause();
-        }
-    }
-
-  
-   // takagen99 : PIP fix to close video when close window
+     // takagen99 : PIP fix to close video when close window
     @Override
     public void onPictureInPictureModeChanged(boolean isInPictureInPictureMode) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode);
@@ -769,6 +762,50 @@ public class PlayActivity extends BaseActivity {
             pipActionReceiver = null;
         }
     }
+    */
+    
+    @Override
+    public void onBackPressed() {
+        if (mController.onBackPressed()) {
+            return;
+        }
+        super.onBackPressed();
+    }
+
+    @Override
+    public boolean dispatchKeyEvent(KeyEvent event) {
+        if (event != null) {
+            if (mController.onKeyEvent(event)) {
+                return true;
+            }
+        }
+        return super.dispatchKeyEvent(event);
+    }
+
+    
+    
+    
+    
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (mVideoView != null) {
+            mVideoView.resume();
+        }
+    }
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mVideoView != null) {
+            mVideoView.pause();
+        }
+    }
+
+  
+  
   
     @Override
     protected void onDestroy() {
