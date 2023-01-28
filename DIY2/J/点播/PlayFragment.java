@@ -1,10 +1,10 @@
-package com.github.tvbox.osc.ui.activity;
+package com.github.tvbox.osc.ui.fragment;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.http.SslError;
@@ -43,7 +43,7 @@ import com.github.catvod.crawler.Spider;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.base.App;
-import com.github.tvbox.osc.base.BaseActivity;
+import com.github.tvbox.osc.base.BaseLazyFragment;
 import com.github.tvbox.osc.bean.ParseBean;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.bean.Subtitle;
@@ -77,6 +77,8 @@ import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.orhanobut.hawk.Hawk;
 
 import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -107,9 +109,11 @@ import tv.danmaku.ijk.media.player.IjkTimedText;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.player.ProgressManager;
 //taka
+import android.content.Intent;
+import android.net.Uri;
 import com.github.tvbox.osc.ui.activity.DetailActivity;
 
-public class PlayActivity extends BaseActivity {
+public class PlayFragment extends BaseLazyFragment {
     private MyVideoView mVideoView;
     private TextView mPlayLoadTip;
     private ImageView mPlayLoadErr;
@@ -119,11 +123,17 @@ public class PlayActivity extends BaseActivity {
     private Handler mHandler;
 
     private long videoDuration = -1;
-//taka
-    private String videoURL;
+private String videoURL;
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_play;
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void refresh(RefreshEvent event) {
+        if (event.type == RefreshEvent.TYPE_SUBTITLE_SIZE_CHANGE) {
+            mController.mSubtitleView.setTextSize((int) event.obj);
+        }
     }
 
     @Override
@@ -134,6 +144,7 @@ public class PlayActivity extends BaseActivity {
     }
 
     private void initView() {
+        EventBus.getDefault().register(this);
         mHandler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(@NonNull Message msg) {
@@ -150,7 +161,7 @@ public class PlayActivity extends BaseActivity {
         mPlayLoadTip = findViewById(R.id.play_load_tip);
         mPlayLoading = findViewById(R.id.play_loading);
         mPlayLoadErr = findViewById(R.id.play_load_error);
-        mController = new VodController(this);
+        mController = new VodController(requireContext());
         mController.setCanChangePosition(true);
         mController.setEnableInNormal(true);
         mController.setGestureEnabled(true);
@@ -182,9 +193,9 @@ public class PlayActivity extends BaseActivity {
         mVideoView.setProgressManager(progressManager);
         mController.setListener(new VodController.VodControlListener() {
             @Override
+            //taka
             public void playNext(boolean rmProgress) {
-                
-                  if (mVodInfo.reverseSort) {
+                if (mVodInfo.reverseSort) {
                     PlayFragment.this.playPrevious();
                 } else {
                     String preProgressKey = progressKey;
@@ -192,24 +203,22 @@ public class PlayActivity extends BaseActivity {
                     if (rmProgress && preProgressKey != null)
                         CacheManager.delete(MD5.string2MD5(preProgressKey), 0);
                 }
-     
-
+            }
             @Override
             public void playPre() {
-                            if (mVodInfo.reverseSort) {
+                if (mVodInfo.reverseSort) {
                     PlayFragment.this.playNext(false);
                 } else {
                     PlayFragment.this.playPrevious();
                 }
-
-                selectMyAudioTrack();
             }
-
-            @Override
+            
+               @Override
             public void openVideo() {
                 openMyVideo();
             }
-                
+            
+
             @Override
             public void changeParse(ParseBean pb) {
                 autoRetryCount = 0;
@@ -266,7 +275,7 @@ public class PlayActivity extends BaseActivity {
     }
 
     void selectMySubtitle() throws Exception {
-        SubtitleDialog subtitleDialog = new SubtitleDialog(PlayActivity.this);
+        SubtitleDialog subtitleDialog = new SubtitleDialog(getActivity());
         int playerType = mVodPlayerCfg.getInt("pl");
         if (mController.mSubtitleView.hasInternal && playerType == 1) {
             subtitleDialog.selectInternal.setVisibility(View.VISIBLE);
@@ -294,11 +303,11 @@ public class PlayActivity extends BaseActivity {
         subtitleDialog.setSearchSubtitleListener(new SubtitleDialog.SearchSubtitleListener() {
             @Override
             public void openSearchSubtitleDialog() {
-                SearchSubtitleDialog searchSubtitleDialog = new SearchSubtitleDialog(PlayActivity.this);
+                SearchSubtitleDialog searchSubtitleDialog = new SearchSubtitleDialog(getActivity());
                 searchSubtitleDialog.setSubtitleLoader(new SearchSubtitleDialog.SubtitleLoader() {
                     @Override
                     public void loadSubtitle(Subtitle subtitle) {
-                        runOnUiThread(new Runnable() {
+                        requireActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 String zimuUrl = subtitle.getUrl();
@@ -322,7 +331,7 @@ public class PlayActivity extends BaseActivity {
         subtitleDialog.setLocalFileChooserListener(new SubtitleDialog.LocalFileChooserListener() {
             @Override
             public void openLocalFileChooserDialog() {
-                new ChooserDialog(PlayActivity.this)
+                new ChooserDialog(getActivity())
                         .withFilter(false, false, "srt", "ass", "scc", "stl", "ttml")
                         .withStartFile("/storage/emulated/0/Download")
                         .withChosenListener(new ChooserDialog.Result() {
@@ -341,9 +350,9 @@ public class PlayActivity extends BaseActivity {
 
     void setSubtitleViewTextStyle(int style) {
         if (style == 0) {
-            mController.mSubtitleView.setTextColor(getBaseContext().getResources().getColorStateList(R.color.color_FFFFFF));
+            mController.mSubtitleView.setTextColor(getContext().getResources().getColorStateList(R.color.color_FFFFFF));
         } else if (style == 1) {
-            mController.mSubtitleView.setTextColor(getBaseContext().getResources().getColorStateList(R.color.color_FFB6C1));
+            mController.mSubtitleView.setTextColor(getContext().getResources().getColorStateList(R.color.color_FFB6C1));
         }
     }
 
@@ -362,7 +371,7 @@ public class PlayActivity extends BaseActivity {
         }
         List<TrackInfoBean> bean = trackInfo.getAudio();
         if (bean.size() < 1) return;
-        SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(PlayActivity.this);
+        SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(getActivity());
         dialog.setTip("切换音轨");
         dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<TrackInfoBean>() {
             @Override
@@ -425,7 +434,7 @@ public class PlayActivity extends BaseActivity {
         }
         List<TrackInfoBean> bean = trackInfo.getSubtitle();
         if (bean.size() < 1) return;
-        SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(PlayActivity.this);
+        SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(getActivity());
         dialog.setTip("切换内置字幕");
         dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<TrackInfoBean>() {
             @Override
@@ -449,7 +458,6 @@ public class PlayActivity extends BaseActivity {
                             }
                         }, 800);
                     }
-
                     dialog.dismiss();
                 } catch (Exception e) {
                     LOG.e("切换内置字幕出错");
@@ -473,18 +481,19 @@ public class PlayActivity extends BaseActivity {
         }, bean, trackInfo.getSubtitleSelected(false));
         dialog.show();
     }
-                                
-      void openMyVideo() {
+    
+    //taka
+    void openMyVideo() {
         Intent i = new Intent();
         i.addCategory(Intent.CATEGORY_DEFAULT);
         i.setAction(android.content.Intent.ACTION_VIEW);
         i.setDataAndType(Uri.parse(videoURL), "video/*");
         startActivity(Intent.createChooser(i, "Open Video with ..."));
-    }                          
-                                
+    }
+    
 
     void setTip(String msg, boolean loading, boolean err) {
-        runOnUiThread(new Runnable() {//影魔 解决解析偶发闪退
+        requireActivity().runOnUiThread(new Runnable() { //影魔
             @Override
             public void run() {
                 mPlayLoadTip.setText(msg);
@@ -503,12 +512,11 @@ public class PlayActivity extends BaseActivity {
 
     void errorWithRetry(String err, boolean finish) {
         if (!autoRetry()) {
-            runOnUiThread(new Runnable() {
+            requireActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (finish) {
                         Toast.makeText(mContext, err, Toast.LENGTH_SHORT).show();
-                        finish();
                     } else {
                         setTip(err, false, true);
                     }
@@ -523,7 +531,8 @@ public class PlayActivity extends BaseActivity {
             url="http://home.jundie.top:666/unBom.php?m3u8="+url;
         }
         String finalUrl = url;
-        runOnUiThread(new Runnable() {
+        if (mActivity == null) return;
+        requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 stopParse();
@@ -538,7 +547,7 @@ public class PlayActivity extends BaseActivity {
                                 String playTitle = mVodInfo.name + " " + vs.name;
                                 setTip("调用外部播放器" + PlayerHelper.getPlayerName(playerType) + "进行播放", true, false);
                                 boolean callResult = false;
-                                callResult = PlayerHelper.runExternalPlayer(playerType, PlayActivity.this, finalUrl, playTitle, playSubtitle, headers);
+                                callResult = PlayerHelper.runExternalPlayer(playerType, requireActivity(), finalUrl, playTitle, playSubtitle, headers);
                                 setTip("调用外部播放器" + PlayerHelper.getPlayerName(playerType) + (callResult ? "成功" : "失败"), callResult, !callResult);
                                 return;
                             }
@@ -664,17 +673,20 @@ public class PlayActivity extends BaseActivity {
         });
     }
 
+    public void setData(Bundle bundle) {
+//        mVodInfo = (VodInfo) bundle.getSerializable("VodInfo");
+        mVodInfo = App.getInstance().getVodInfo();
+        sourceKey = bundle.getString("sourceKey");
+        sourceBean = ApiConfig.get().getSource(sourceKey);
+        initPlayerCfg();
+        play(false);
+    }
+
     private void initData() {
-        Intent intent = getIntent();
+        /*Intent intent = getIntent();
         if (intent != null && intent.getExtras() != null) {
-            Bundle bundle = intent.getExtras();
-//            mVodInfo = (VodInfo) bundle.getSerializable("VodInfo");
-            mVodInfo = App.getInstance().getVodInfo();
-            sourceKey = bundle.getString("sourceKey");
-            sourceBean = ApiConfig.get().getSource(sourceKey);
-            initPlayerCfg();
-            play(false);
-        }
+
+        }*/
     }
 
     void initPlayerCfg() {
@@ -685,7 +697,7 @@ public class PlayActivity extends BaseActivity {
         }
         try {
             if (!mVodPlayerCfg.has("pl")) {
-                mVodPlayerCfg.put("pl", (sourceBean.getPlayerType() == -1) ? (int)Hawk.get(HawkConfig.PLAY_TYPE, 1) : sourceBean.getPlayerType() );
+                mVodPlayerCfg.put("pl", (sourceBean.getPlayerType() == -1) ? (int)Hawk.get(HawkConfig.PLAY_TYPE, 1) : sourceBean.getPlayerType());
             }
             if (!mVodPlayerCfg.has("pr")) {
                 mVodPlayerCfg.put("pr", Hawk.get(HawkConfig.PLAY_RENDER, 0));
@@ -711,35 +723,29 @@ public class PlayActivity extends BaseActivity {
         mController.setPlayerConfig(mVodPlayerCfg);
     }
 
-    @Override
-    public void onBackPressed() {
-        if (mController.onBackPressed()) {
-            return;
+    public boolean onBackPressed() {
+        int requestedOrientation = getActivity().getRequestedOrientation();
+        if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT) {
+            getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+            mController.mLandscapePortraitBtn.setText("竖屏");
         }
-        super.onBackPressed();
+        if (mController.onBackPressed()) {
+            return true;
+        }
+        return false;
     }
 
-    @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event != null) {
             if (mController.onKeyEvent(event)) {
                 return true;
             }
         }
-        return super.dispatchKeyEvent(event);
+        return false;
     }
 
     @Override
-    protected void onResume() {
-        super.onResume();
-        if (mVideoView != null) {
-            mVideoView.resume();
-        }
-    }
-
-
-    @Override
-    protected void onPause() {
+    public void onPause() {
         super.onPause();
         if (mVideoView != null) {
             mVideoView.pause();
@@ -747,8 +753,30 @@ public class PlayActivity extends BaseActivity {
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    public void onResume() {
+        super.onResume();
+        if (mVideoView != null) {
+            mVideoView.resume();
+        }
+    }
+
+    @Override
+    public void onHiddenChanged(boolean hidden) {
+        if (hidden) {
+            if (mVideoView != null) {
+                mVideoView.pause();
+            }
+        } else {
+            if (mVideoView != null) {
+                mVideoView.resume();
+            }
+        }
+        super.onHiddenChanged(hidden);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
         if (mVideoView != null) {
             mVideoView.release();
             mVideoView = null;
@@ -763,20 +791,15 @@ public class PlayActivity extends BaseActivity {
     private SourceBean sourceBean;
 
     private void playNext(boolean isProgress) {
-        boolean hasNext = true;
+        boolean hasNext;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
             hasNext = false;
         } else {
             hasNext = mVodInfo.playIndex + 1 < mVodInfo.seriesMap.get(mVodInfo.playFlag).size();
         }
         if (!hasNext) {
-            if(isProgress && mVodInfo!=null){
-                mVodInfo.playIndex=0;
-                Toast.makeText(this, "已经是最后一集了!,即将跳到第一集继续播放", Toast.LENGTH_SHORT).show();
-            }else {
-                Toast.makeText(this, "已经是最后一集了!", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            Toast.makeText(requireContext(), "已经是最后一集了!", Toast.LENGTH_SHORT).show();
+            return;
         }else {
             mVodInfo.playIndex++;
         }
@@ -791,7 +814,7 @@ public class PlayActivity extends BaseActivity {
             hasPre = mVodInfo.playIndex - 1 >= 0;
         }
         if (!hasPre) {
-            Toast.makeText(this, "已经是第一集了!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(requireContext(), "已经是第一集了!", Toast.LENGTH_SHORT).show();
             return;
         }
         mVodInfo.playIndex--;
@@ -828,6 +851,7 @@ public class PlayActivity extends BaseActivity {
     }
 
     public void play(boolean reset) {
+        if(mVodInfo==null)return;
         VodInfo.VodSeries vs = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_REFRESH, mVodInfo.playIndex));
         setTip("正在获取播放信息", true, false);
@@ -909,6 +933,7 @@ public class PlayActivity extends BaseActivity {
 
     JSONObject jsonParse(String input, String json) throws JSONException {
         JSONObject jsonPlayData = new JSONObject(json);
+        //小窗版解析方法改到这了  之前那个位置data解析无效
         String url;
         if (jsonPlayData.has("data")) {
             url = jsonPlayData.getJSONObject("data").getString("url");
@@ -952,14 +977,6 @@ public class PlayActivity extends BaseActivity {
 
     ExecutorService parseThreadPool;
 
-    private String encodeUrl(String url) {
-        try {
-            return URLEncoder.encode(url, "UTF-8");
-        } catch (Exception e) {
-            return url;
-        }
-    }
-
     private void doParse(ParseBean pb) {
         stopParse();
         initParseLoadFound();
@@ -990,6 +1007,7 @@ public class PlayActivity extends BaseActivity {
                 }
             }
             loadWebView(pb.getUrl() + webUrl);
+
         } else if (pb.getType() == 1) { // json 解析
             setTip("正在解析播放地址", true, false);
             // 解析ext
@@ -1070,7 +1088,7 @@ public class PlayActivity extends BaseActivity {
                 public void run() {
                     JSONObject rs = ApiConfig.get().jsonExt(pb.getUrl(), jxs, webUrl);
                     if (rs == null || !rs.has("url") || rs.optString("url").isEmpty()) {
-//                        errorWithRetry("解析错误", false);//没有url重试也没有重新获取
+//                        errorWithRetry("解析错误", false);
                         setTip("解析错误", false, true);
                     } else {
                         HashMap<String, String> headers = null;
@@ -1090,7 +1108,7 @@ public class PlayActivity extends BaseActivity {
                             }
                         }
                         if (rs.has("jxFrom")) {
-                            runOnUiThread(new Runnable() {
+                            requireActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     Toast.makeText(mContext, "解析来自:" + rs.optString("jxFrom"), Toast.LENGTH_SHORT).show();
@@ -1135,7 +1153,7 @@ public class PlayActivity extends BaseActivity {
                             if (rs.has("ua")) {
                                 webUserAgent = rs.optString("ua").trim();
                             }
-                            runOnUiThread(new Runnable() {
+                            requireActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     String mixParseUrl = DefaultConfig.checkReplaceProxy(rs.optString("url", ""));
@@ -1160,11 +1178,11 @@ public class PlayActivity extends BaseActivity {
                                         headers.put(key, hds.getString(key));
                                     }
                                 } catch (Throwable th) {
-
+                                    th.printStackTrace();
                                 }
                             }
                             if (rs.has("jxFrom")) {
-                                runOnUiThread(new Runnable() {
+                                requireActivity().runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         Toast.makeText(mContext, "解析来自:" + rs.optString("jxFrom"), Toast.LENGTH_SHORT).show();
@@ -1176,6 +1194,14 @@ public class PlayActivity extends BaseActivity {
                     }
                 }
             });
+        }
+    }
+
+    private String encodeUrl(String url) {
+        try {
+            return URLEncoder.encode(url, "UTF-8");
+        } catch (Exception e) {
+            return url;
         }
     }
 
@@ -1234,7 +1260,7 @@ public class PlayActivity extends BaseActivity {
     }
 
     void loadUrl(String url) {
-        runOnUiThread(new Runnable() {
+        requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (mXwalkWebView != null) {
@@ -1266,7 +1292,8 @@ public class PlayActivity extends BaseActivity {
     }
 
     void stopLoadWebView(boolean destroy) {
-        runOnUiThread(new Runnable() {
+        if (mActivity == null) return;
+        requireActivity().runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
@@ -1295,15 +1322,20 @@ public class PlayActivity extends BaseActivity {
     }
 
     boolean checkVideoFormat(String url) {
-        if (url.contains("url=http") || url.contains(".html")) {
+        try{
+            if (url.contains("url=http") || url.contains(".html")) {
+                return false;
+            }
+            if (sourceBean.getType() == 3) {
+                Spider sp = ApiConfig.get().getCSP(sourceBean);
+                if (sp != null && sp.manualVideoCheck()){
+                    return sp.isVideoFormat(url);
+                }
+            }
+            return VideoParseRuler.checkIsVideoForParse(webUrl, url);
+        }catch (Exception e){
             return false;
         }
-        if (sourceBean.getType() == 3) {
-            Spider sp = ApiConfig.get().getCSP(sourceBean);
-            if (sp != null && sp.manualVideoCheck())
-                return sp.isVideoFormat(url);
-        }
-        return VideoParseRuler.checkIsVideoForParse(webUrl, url);
     }
 
     class MyWebView extends WebView {
@@ -1315,7 +1347,7 @@ public class PlayActivity extends BaseActivity {
         public void setOverScrollMode(int mode) {
             super.setOverScrollMode(mode);
             if (mContext instanceof Activity)
-                AutoSize.autoConvertDensityOfCustomAdapt((Activity) mContext, PlayActivity.this);
+                AutoSize.autoConvertDensityOfCustomAdapt((Activity) mContext, PlayFragment.this);
         }
 
         @Override
@@ -1333,7 +1365,7 @@ public class PlayActivity extends BaseActivity {
         public void setOverScrollMode(int mode) {
             super.setOverScrollMode(mode);
             if (mContext instanceof Activity)
-                AutoSize.autoConvertDensityOfCustomAdapt((Activity) mContext, PlayActivity.this);
+                AutoSize.autoConvertDensityOfCustomAdapt((Activity) mContext, PlayFragment.this);
         }
 
         @Override
@@ -1354,7 +1386,7 @@ public class PlayActivity extends BaseActivity {
         webView.setFocusableInTouchMode(false);
         webView.clearFocus();
         webView.setOverScrollMode(View.OVER_SCROLL_ALWAYS);
-        addContentView(webView, layoutParams);
+        requireActivity().addContentView(webView, layoutParams);
         /* 添加webView配置 */
         final WebSettings settings = webView.getSettings();
         settings.setNeedInitialFocus(false);
@@ -1390,7 +1422,7 @@ public class PlayActivity extends BaseActivity {
         //设置编码
         settings.setDefaultTextEncodingName("utf-8");
         settings.setUserAgentString(webView.getSettings().getUserAgentString());
-        // settings.setUserAgentString(ANDROID_UA);
+//         settings.setUserAgentString(ANDROID_UA);
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -1445,6 +1477,7 @@ public class PlayActivity extends BaseActivity {
             super.onPageFinished(view,url);
             String click=sourceBean.getClickSelector();
             LOG.i("onPageFinished url:" + url);
+
             if(!click.isEmpty()){
                 String selector;
                 if(click.contains(";")){
@@ -1454,6 +1487,7 @@ public class PlayActivity extends BaseActivity {
                     selector=click.trim();
                 }
                 String js="$(\""+ selector+"\").click();";
+                LOG.i("javascript:" + js);
                 mSysWebView.loadUrl("javascript:"+js);
             }
         }
@@ -1504,6 +1538,7 @@ public class PlayActivity extends BaseActivity {
         @Nullable
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
+//            WebResourceResponse response = checkIsVideo(url, new HashMap<>());
             return null;
         }
 
@@ -1545,7 +1580,7 @@ public class PlayActivity extends BaseActivity {
         webView.setFocusableInTouchMode(false);
         webView.clearFocus();
         webView.setOverScrollMode(View.OVER_SCROLL_ALWAYS);
-        addContentView(webView, layoutParams);
+        requireActivity().addContentView(webView, layoutParams);
         /* 添加webView配置 */
         final XWalkSettings settings = webView.getSettings();
         settings.setAllowContentAccess(true);
@@ -1653,6 +1688,7 @@ public class PlayActivity extends BaseActivity {
                 ad = loadedUrls.get(url);
             }
             if (!ad ) {
+
                 if (checkVideoFormat(url)) {
                     HashMap<String, String> webHeaders = new HashMap<>();
                     Map<String, String> hds = request.getRequestHeaders();
@@ -1695,4 +1731,3 @@ public class PlayActivity extends BaseActivity {
     }
 
 }
-
