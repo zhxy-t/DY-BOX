@@ -94,6 +94,7 @@ import xyz.doikki.videoplayer.player.VideoView;
 import android.util.Base64;
 import com.github.tvbox.osc.ui.adapter.ApiHistoryDialogAdapter;
 import com.github.tvbox.osc.ui.dialog.ApiHistoryDialog;
+
 /**
  * @author pj567
  * @date :2021/1/12
@@ -1529,7 +1530,7 @@ public class LivePlayActivity extends BaseActivity {
                                 Hawk.put(HawkConfig.LIVE_URL, liveURL);
                                 liveChannelGroupList.clear();
                                 try {
-                                    liveURL = Base64.encodeToString(liveURL.getBytes("UTF-8"), Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP);
+                                    liveURL = Base64.encodeToString(liveURL.getBytes("StandardCharsets.UTF_8"), Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP);
                                     liveURL = "http://127.0.0.1:9978/proxy?do=live&type=txt&ext=" + liveURL;
                                     loadProxyLives(liveURL);
                                 } catch (Throwable th) {
@@ -1573,9 +1574,9 @@ public class LivePlayActivity extends BaseActivity {
     }
 
     public void loadProxyLives(String url) {
-        try {
+      try {
             Uri parsedUrl = Uri.parse(url);
-            url = new String(Base64.decode(parsedUrl.getQueryParameter("ext"), Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP), "UTF-8");
+            url = new String(Base64.decode(parsedUrl.getQueryParameter("ext"), Base64.DEFAULT | Base64.URL_SAFE | Base64.NO_WRAP), StandardCharsets.UTF_8);
         } catch (Throwable th) {
             Toast.makeText(App.getInstance(), "频道列表为空", Toast.LENGTH_SHORT).show();
             finish();
