@@ -95,6 +95,9 @@ import android.util.Base64;
 import com.github.tvbox.osc.ui.adapter.ApiHistoryDialogAdapter;
 import com.github.tvbox.osc.ui.dialog.ApiHistoryDialog;
 
+import java.nio.charset.StandardCharsets;
+    
+
 /**
  * @author pj567
  * @date :2021/1/12
