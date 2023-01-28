@@ -823,7 +823,7 @@ public class PlayActivity extends BaseActivity {
     private String sourceKey;
     private SourceBean sourceBean;
 
-    private void playNext(boolean isProgress) {
+  private void playNext(boolean isProgress) {
         boolean hasNext = true;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
             hasNext = false;
@@ -831,23 +831,24 @@ public class PlayActivity extends BaseActivity {
             hasNext = mVodInfo.playIndex + 1 < mVodInfo.seriesMap.get(mVodInfo.playFlag).size();
         }
         if (!hasNext) {
-            if(isProgress && mVodInfo!=null){
+           if(isProgress && mVodInfo!=null){
                 mVodInfo.playIndex=0;
                 Toast.makeText(this, "已经是最后一集了!,即将跳到第一集继续播放", Toast.LENGTH_SHORT).show();
             }else {
                 Toast.makeText(this, "已经是最后一集了!", Toast.LENGTH_SHORT).show();
-              // takagen99: 在最后一集结束后自动回到详细页面
+             // takagen99: To auto go back to Detail Page after last episode
             if (inProgress) {
                 this.finish();
             }
-                return;
-            }
-        }else {
+            return;
+        }
+        if (mVodInfo.reverseSort) {
+            mVodInfo.playIndex--;
+        } else {
             mVodInfo.playIndex++;
         }
         play(false);
     }
-
     private void playPrevious() {
         boolean hasPre = true;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
@@ -862,7 +863,7 @@ public class PlayActivity extends BaseActivity {
         mVodInfo.playIndex--;
         play(false);
     }
-
+    
     private int autoRetryCount = 0;
 
     boolean autoRetry() {
@@ -879,6 +880,7 @@ public class PlayActivity extends BaseActivity {
             return false;
         }
     }
+
 
     void autoRetryFromLoadFoundVideoUrls() {
         String videoUrl = loadFoundVideoUrls.poll();
