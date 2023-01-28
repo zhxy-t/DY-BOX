@@ -27,7 +27,7 @@ public class HawkConfig {
     public static final String HOME_REC = "home_rec"; // 0 豆瓣热播 1 数据源推荐 2 历史
     public static final String HISTORY_NUM = "history_num";
     public static final String SEARCH_VIEW = "search_view"; // 0 列表 1 缩略图
-
+    public static final String LIVE_SKIP_PASSWORD = "skip_password";//跳过密码
     public static final String PIC_IN_PIC = "pic_in_pic"; // true = on, false = off
 
 
