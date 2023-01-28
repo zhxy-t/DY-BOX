@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:background="@drawable/shape_dialog_bg_main"
+    android:orientation="vertical"
+    android:padding="@dimen/vs_30">
+
+    <TextView
+        android:layout_width="@dimen/vs_600"
+        android:layout_height="wrap_content"
+        android:lineSpacingExtra="@dimen/ts_50"
+        android:lineSpacingMultiplier="0"
+        android:text="更新日志：\n1.5.0 快进改为1.75,优化小窗UI,同步俊版更新\n1.5.1 修复epg,快进改为1.5\n1.5.2 更换图标,更改主页时间显示方式\n1.5.3 关闭变速变调,优化ijk,修复广播嗅探,更改播放器切换方式
+                      \n1.5.4 优化小窗UI,多排UI,标题滚动,修改dns和渲染的默认,增加直播epg地址\n1.5.5 添加直播列表,直播历史记录,直播历史bug修复"
+        android:textColor="@color/color_CC000000"
+        android:textSize="@dimen/ts_18" />
+
+</LinearLayout>
