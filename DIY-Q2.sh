@@ -130,8 +130,8 @@ sed -i 's/10000/6000/g'  $CURRENT_DIR/$DIR/app/src/main/java/com/github/tvbox/os
 sed -i 's/TVBox/影视Box/g' $CURRENT_DIR/$DIR/app/src/main/res/values/strings.xml
 #版本号
 #sed -i 's/1.0.0/2/g'     $CURRENT_DIR/$DIR/app/build.gradle
-sed -i 's/1.0.0/1.5.7/g'  $CURRENT_DIR/$DIR/app/build.gradle
-sed -i 's/1.0.0/1.5.7/g'  $CURRENT_DIR/$DIR/app/src/main/res/layout/fragment_model.xml
+sed -i 's/1.0.0/1.5.8/g'  $CURRENT_DIR/$DIR/app/build.gradle
+sed -i 's/1.0.0/1.5.8/g'  $CURRENT_DIR/$DIR/app/src/main/res/layout/fragment_model.xml
 #共存
 sed -i 's/com.github.tvbox.osc/com.tvbox.Q/g' $CURRENT_DIR/$DIR/app/build.gradle
 
