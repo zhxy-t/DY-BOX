@@ -1,10 +1,10 @@
-package com.github.tvbox.osc.ui.fragment;
+package com.github.tvbox.osc.ui.activity;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.ActivityInfo;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.http.SslError;
@@ -43,7 +43,7 @@ import com.github.catvod.crawler.Spider;
 import com.github.tvbox.osc.R;
 import com.github.tvbox.osc.api.ApiConfig;
 import com.github.tvbox.osc.base.App;
-import com.github.tvbox.osc.base.BaseLazyFragment;
+import com.github.tvbox.osc.base.BaseActivity;
 import com.github.tvbox.osc.bean.ParseBean;
 import com.github.tvbox.osc.bean.SourceBean;
 import com.github.tvbox.osc.bean.Subtitle;
@@ -77,8 +77,6 @@ import com.obsez.android.lib.filechooser.ChooserDialog;
 import com.orhanobut.hawk.Hawk;
 
 import org.greenrobot.eventbus.EventBus;
-import org.greenrobot.eventbus.Subscribe;
-import org.greenrobot.eventbus.ThreadMode;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -109,11 +107,9 @@ import tv.danmaku.ijk.media.player.IjkTimedText;
 import xyz.doikki.videoplayer.player.AbstractPlayer;
 import xyz.doikki.videoplayer.player.ProgressManager;
 //taka
-import android.content.Intent;
-import android.net.Uri;
 import com.github.tvbox.osc.ui.activity.DetailActivity;
 
-public class PlayFragment extends BaseLazyFragment {
+public class PlayActivity extends BaseActivity {
     private MyVideoView mVideoView;
     private TextView mPlayLoadTip;
     private ImageView mPlayLoadErr;
@@ -123,19 +119,11 @@ public class PlayFragment extends BaseLazyFragment {
     private Handler mHandler;
 
     private long videoDuration = -1;
-private String videoURL;
-  
-  
+//taka
+    private String videoURL;
     @Override
     protected int getLayoutResID() {
         return R.layout.activity_play;
-    }
-
-    @Subscribe(threadMode = ThreadMode.MAIN)
-    public void refresh(RefreshEvent event) {
-        if (event.type == RefreshEvent.TYPE_SUBTITLE_SIZE_CHANGE) {
-            mController.mSubtitleView.setTextSize((int) event.obj);
-        }
     }
 
     @Override
@@ -146,7 +134,6 @@ private String videoURL;
     }
 
     private void initView() {
-        EventBus.getDefault().register(this);
         mHandler = new Handler(new Handler.Callback() {
             @Override
             public boolean handleMessage(@NonNull Message msg) {
@@ -163,7 +150,7 @@ private String videoURL;
         mPlayLoadTip = findViewById(R.id.play_load_tip);
         mPlayLoading = findViewById(R.id.play_loading);
         mPlayLoadErr = findViewById(R.id.play_load_error);
-        mController = new VodController(requireContext());
+        mController = new VodController(this);
         mController.setCanChangePosition(true);
         mController.setEnableInNormal(true);
         mController.setGestureEnabled(true);
@@ -196,23 +183,33 @@ private String videoURL;
         mController.setListener(new VodController.VodControlListener() {
             @Override
             public void playNext(boolean rmProgress) {
-                String preProgressKey = progressKey;
-                PlayFragment.this.playNext(rmProgress);
-                if (rmProgress && preProgressKey != null)
-                    CacheManager.delete(MD5.string2MD5(preProgressKey), 0);
-            }
+                
+                  if (mVodInfo.reverseSort) {
+                    PlayFragment.this.playPrevious();
+                } else {
+                    String preProgressKey = progressKey;
+                    PlayFragment.this.playNext(rmProgress);
+                    if (rmProgress && preProgressKey != null)
+                        CacheManager.delete(MD5.string2MD5(preProgressKey), 0);
+                }
+     
 
-           @Override
+            @Override
             public void playPre() {
-                if (mVodInfo.reverseSort) {
+                            if (mVodInfo.reverseSort) {
                     PlayFragment.this.playNext(false);
                 } else {
                     PlayFragment.this.playPrevious();
                 }
+
                 selectMyAudioTrack();
-            }  
-            
-          
+            }
+
+            @Override
+            public void openVideo() {
+                openMyVideo();
+            }
+                
             @Override
             public void changeParse(ParseBean pb) {
                 autoRetryCount = 0;
@@ -225,12 +222,6 @@ private String videoURL;
                 EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_REFRESH, mVodPlayerCfg));
             }
 
-          //taka
-           @Override
-            public void openVideo() {
-                openMyVideo();
-            }
-          
             @Override
             public void replay(boolean replay) {
                 autoRetryCount = 0;
@@ -275,7 +266,7 @@ private String videoURL;
     }
 
     void selectMySubtitle() throws Exception {
-        SubtitleDialog subtitleDialog = new SubtitleDialog(getActivity());
+        SubtitleDialog subtitleDialog = new SubtitleDialog(PlayActivity.this);
         int playerType = mVodPlayerCfg.getInt("pl");
         if (mController.mSubtitleView.hasInternal && playerType == 1) {
             subtitleDialog.selectInternal.setVisibility(View.VISIBLE);
@@ -303,11 +294,11 @@ private String videoURL;
         subtitleDialog.setSearchSubtitleListener(new SubtitleDialog.SearchSubtitleListener() {
             @Override
             public void openSearchSubtitleDialog() {
-                SearchSubtitleDialog searchSubtitleDialog = new SearchSubtitleDialog(getActivity());
+                SearchSubtitleDialog searchSubtitleDialog = new SearchSubtitleDialog(PlayActivity.this);
                 searchSubtitleDialog.setSubtitleLoader(new SearchSubtitleDialog.SubtitleLoader() {
                     @Override
                     public void loadSubtitle(Subtitle subtitle) {
-                        requireActivity().runOnUiThread(new Runnable() {
+                        runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 String zimuUrl = subtitle.getUrl();
@@ -331,7 +322,7 @@ private String videoURL;
         subtitleDialog.setLocalFileChooserListener(new SubtitleDialog.LocalFileChooserListener() {
             @Override
             public void openLocalFileChooserDialog() {
-                new ChooserDialog(getActivity())
+                new ChooserDialog(PlayActivity.this)
                         .withFilter(false, false, "srt", "ass", "scc", "stl", "ttml")
                         .withStartFile("/storage/emulated/0/Download")
                         .withChosenListener(new ChooserDialog.Result() {
@@ -350,9 +341,9 @@ private String videoURL;
 
     void setSubtitleViewTextStyle(int style) {
         if (style == 0) {
-            mController.mSubtitleView.setTextColor(getContext().getResources().getColorStateList(R.color.color_FFFFFF));
+            mController.mSubtitleView.setTextColor(getBaseContext().getResources().getColorStateList(R.color.color_FFFFFF));
         } else if (style == 1) {
-            mController.mSubtitleView.setTextColor(getContext().getResources().getColorStateList(R.color.color_FFB6C1));
+            mController.mSubtitleView.setTextColor(getBaseContext().getResources().getColorStateList(R.color.color_FFB6C1));
         }
     }
 
@@ -371,7 +362,7 @@ private String videoURL;
         }
         List<TrackInfoBean> bean = trackInfo.getAudio();
         if (bean.size() < 1) return;
-        SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(getActivity());
+        SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(PlayActivity.this);
         dialog.setTip("切换音轨");
         dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<TrackInfoBean>() {
             @Override
@@ -434,7 +425,7 @@ private String videoURL;
         }
         List<TrackInfoBean> bean = trackInfo.getSubtitle();
         if (bean.size() < 1) return;
-        SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(getActivity());
+        SelectDialog<TrackInfoBean> dialog = new SelectDialog<>(PlayActivity.this);
         dialog.setTip("切换内置字幕");
         dialog.setAdapter(new SelectDialogAdapter.SelectDialogInterface<TrackInfoBean>() {
             @Override
@@ -458,6 +449,7 @@ private String videoURL;
                             }
                         }, 800);
                     }
+
                     dialog.dismiss();
                 } catch (Exception e) {
                     LOG.e("切换内置字幕出错");
@@ -481,19 +473,18 @@ private String videoURL;
         }, bean, trackInfo.getSubtitleSelected(false));
         dialog.show();
     }
-
-  //taka
-  void openMyVideo() {
+                                
+      void openMyVideo() {
         Intent i = new Intent();
         i.addCategory(Intent.CATEGORY_DEFAULT);
         i.setAction(android.content.Intent.ACTION_VIEW);
         i.setDataAndType(Uri.parse(videoURL), "video/*");
         startActivity(Intent.createChooser(i, "Open Video with ..."));
-    }
-  
-  
+    }                          
+                                
+
     void setTip(String msg, boolean loading, boolean err) {
-        requireActivity().runOnUiThread(new Runnable() { //影魔
+        runOnUiThread(new Runnable() {//影魔 解决解析偶发闪退
             @Override
             public void run() {
                 mPlayLoadTip.setText(msg);
@@ -512,11 +503,12 @@ private String videoURL;
 
     void errorWithRetry(String err, boolean finish) {
         if (!autoRetry()) {
-            requireActivity().runOnUiThread(new Runnable() {
+            runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (finish) {
                         Toast.makeText(mContext, err, Toast.LENGTH_SHORT).show();
+                        finish();
                     } else {
                         setTip(err, false, true);
                     }
@@ -568,7 +560,6 @@ private String videoURL;
             }
         });
     }
-
 
     private void initSubtitleView() {
         TrackInfo trackInfo = null;
@@ -673,20 +664,17 @@ private String videoURL;
         });
     }
 
-    public void setData(Bundle bundle) {
-//        mVodInfo = (VodInfo) bundle.getSerializable("VodInfo");
-        mVodInfo = App.getInstance().getVodInfo();
-        sourceKey = bundle.getString("sourceKey");
-        sourceBean = ApiConfig.get().getSource(sourceKey);
-        initPlayerCfg();
-        play(false);
-    }
-
     private void initData() {
-        /*Intent intent = getIntent();
+        Intent intent = getIntent();
         if (intent != null && intent.getExtras() != null) {
-
-        }*/
+            Bundle bundle = intent.getExtras();
+//            mVodInfo = (VodInfo) bundle.getSerializable("VodInfo");
+            mVodInfo = App.getInstance().getVodInfo();
+            sourceKey = bundle.getString("sourceKey");
+            sourceBean = ApiConfig.get().getSource(sourceKey);
+            initPlayerCfg();
+            play(false);
+        }
     }
 
     void initPlayerCfg() {
@@ -697,7 +685,7 @@ private String videoURL;
         }
         try {
             if (!mVodPlayerCfg.has("pl")) {
-                mVodPlayerCfg.put("pl", (sourceBean.getPlayerType() == -1) ? (int)Hawk.get(HawkConfig.PLAY_TYPE, 1) : sourceBean.getPlayerType());
+                mVodPlayerCfg.put("pl", (sourceBean.getPlayerType() == -1) ? (int)Hawk.get(HawkConfig.PLAY_TYPE, 1) : sourceBean.getPlayerType() );
             }
             if (!mVodPlayerCfg.has("pr")) {
                 mVodPlayerCfg.put("pr", Hawk.get(HawkConfig.PLAY_RENDER, 0));
@@ -723,29 +711,35 @@ private String videoURL;
         mController.setPlayerConfig(mVodPlayerCfg);
     }
 
-    public boolean onBackPressed() {
-        int requestedOrientation = getActivity().getRequestedOrientation();
-        if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_REVERSE_PORTRAIT) {
-            getActivity().setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-            mController.mLandscapePortraitBtn.setText("竖屏");
-        }
+    @Override
+    public void onBackPressed() {
         if (mController.onBackPressed()) {
-            return true;
+            return;
         }
-        return false;
+        super.onBackPressed();
     }
 
+    @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
         if (event != null) {
             if (mController.onKeyEvent(event)) {
                 return true;
             }
         }
-        return false;
+        return super.dispatchKeyEvent(event);
     }
 
     @Override
-    public void onPause() {
+    protected void onResume() {
+        super.onResume();
+        if (mVideoView != null) {
+            mVideoView.resume();
+        }
+    }
+
+
+    @Override
+    protected void onPause() {
         super.onPause();
         if (mVideoView != null) {
             mVideoView.pause();
@@ -753,30 +747,8 @@ private String videoURL;
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        if (mVideoView != null) {
-            mVideoView.resume();
-        }
-    }
-
-    @Override
-    public void onHiddenChanged(boolean hidden) {
-        if (hidden) {
-            if (mVideoView != null) {
-                mVideoView.pause();
-            }
-        } else {
-            if (mVideoView != null) {
-                mVideoView.resume();
-            }
-        }
-        super.onHiddenChanged(hidden);
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
+    protected void onDestroy() {
+        super.onDestroy();
         if (mVideoView != null) {
             mVideoView.release();
             mVideoView = null;
@@ -790,22 +762,7 @@ private String videoURL;
     private String sourceKey;
     private SourceBean sourceBean;
 
- public void playPrevious() {
-        boolean hasPre = true;
-        if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
-            hasPre = false;
-        } else {
-            hasPre = mVodInfo.playIndex - 1 >= 0;
-        }
-        if (!hasPre) {
-            Toast.makeText(requireContext(), "已经是第一集了", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        mVodInfo.playIndex--;
-        play(false);
-    }
-
-  public void playNext(boolean inProgress) {
+    private void playNext(boolean isProgress) {
         boolean hasNext = true;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
             hasNext = false;
@@ -813,18 +770,34 @@ private String videoURL;
             hasNext = mVodInfo.playIndex + 1 < mVodInfo.seriesMap.get(mVodInfo.playFlag).size();
         }
         if (!hasNext) {
-            Toast.makeText(requireContext(), "已经是最后一集了", Toast.LENGTH_SHORT).show();
-            // takagen99: 在最后一集结束后自动回到详细页面
-            if (inProgress) {
-                ((DetailActivity) mActivity).toggleFullPreview();
+            if(isProgress && mVodInfo!=null){
+                mVodInfo.playIndex=0;
+                Toast.makeText(this, "已经是最后一集了!,即将跳到第一集继续播放", Toast.LENGTH_SHORT).show();
+            }else {
+                Toast.makeText(this, "已经是最后一集了!", Toast.LENGTH_SHORT).show();
+                return;
             }
-            return;
+        }else {
+            mVodInfo.playIndex++;
         }
-        mVodInfo.playIndex++;
         play(false);
     }
-    
-  
+
+    private void playPrevious() {
+        boolean hasPre = true;
+        if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
+            hasPre = false;
+        } else {
+            hasPre = mVodInfo.playIndex - 1 >= 0;
+        }
+        if (!hasPre) {
+            Toast.makeText(this, "已经是第一集了!", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        mVodInfo.playIndex--;
+        play(false);
+    }
+
     private int autoRetryCount = 0;
 
     boolean autoRetry() {
@@ -855,7 +828,6 @@ private String videoURL;
     }
 
     public void play(boolean reset) {
-        if(mVodInfo==null)return;
         VodInfo.VodSeries vs = mVodInfo.seriesMap.get(mVodInfo.playFlag).get(mVodInfo.playIndex);
         EventBus.getDefault().post(new RefreshEvent(RefreshEvent.TYPE_REFRESH, mVodInfo.playIndex));
         setTip("正在获取播放信息", true, false);
@@ -937,7 +909,6 @@ private String videoURL;
 
     JSONObject jsonParse(String input, String json) throws JSONException {
         JSONObject jsonPlayData = new JSONObject(json);
-        //小窗版解析方法改到这了  之前那个位置data解析无效
         String url;
         if (jsonPlayData.has("data")) {
             url = jsonPlayData.getJSONObject("data").getString("url");
@@ -981,6 +952,14 @@ private String videoURL;
 
     ExecutorService parseThreadPool;
 
+    private String encodeUrl(String url) {
+        try {
+            return URLEncoder.encode(url, "UTF-8");
+        } catch (Exception e) {
+            return url;
+        }
+    }
+
     private void doParse(ParseBean pb) {
         stopParse();
         initParseLoadFound();
@@ -1011,7 +990,6 @@ private String videoURL;
                 }
             }
             loadWebView(pb.getUrl() + webUrl);
-
         } else if (pb.getType() == 1) { // json 解析
             setTip("正在解析播放地址", true, false);
             // 解析ext
@@ -1092,7 +1070,7 @@ private String videoURL;
                 public void run() {
                     JSONObject rs = ApiConfig.get().jsonExt(pb.getUrl(), jxs, webUrl);
                     if (rs == null || !rs.has("url") || rs.optString("url").isEmpty()) {
-//                        errorWithRetry("解析错误", false);
+//                        errorWithRetry("解析错误", false);//没有url重试也没有重新获取
                         setTip("解析错误", false, true);
                     } else {
                         HashMap<String, String> headers = null;
@@ -1112,7 +1090,7 @@ private String videoURL;
                             }
                         }
                         if (rs.has("jxFrom")) {
-                            requireActivity().runOnUiThread(new Runnable() {
+                            runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     Toast.makeText(mContext, "解析来自:" + rs.optString("jxFrom"), Toast.LENGTH_SHORT).show();
@@ -1157,7 +1135,7 @@ private String videoURL;
                             if (rs.has("ua")) {
                                 webUserAgent = rs.optString("ua").trim();
                             }
-                            requireActivity().runOnUiThread(new Runnable() {
+                            runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     String mixParseUrl = DefaultConfig.checkReplaceProxy(rs.optString("url", ""));
@@ -1182,11 +1160,11 @@ private String videoURL;
                                         headers.put(key, hds.getString(key));
                                     }
                                 } catch (Throwable th) {
-                                    th.printStackTrace();
+
                                 }
                             }
                             if (rs.has("jxFrom")) {
-                                requireActivity().runOnUiThread(new Runnable() {
+                                runOnUiThread(new Runnable() {
                                     @Override
                                     public void run() {
                                         Toast.makeText(mContext, "解析来自:" + rs.optString("jxFrom"), Toast.LENGTH_SHORT).show();
@@ -1198,14 +1176,6 @@ private String videoURL;
                     }
                 }
             });
-        }
-    }
-
-    private String encodeUrl(String url) {
-        try {
-            return URLEncoder.encode(url, "UTF-8");
-        } catch (Exception e) {
-            return url;
         }
     }
 
@@ -1264,7 +1234,7 @@ private String videoURL;
     }
 
     void loadUrl(String url) {
-        requireActivity().runOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 if (mXwalkWebView != null) {
@@ -1296,8 +1266,7 @@ private String videoURL;
     }
 
     void stopLoadWebView(boolean destroy) {
-        if (mActivity == null) return;
-        requireActivity().runOnUiThread(new Runnable() {
+        runOnUiThread(new Runnable() {
             @Override
             public void run() {
 
@@ -1326,20 +1295,15 @@ private String videoURL;
     }
 
     boolean checkVideoFormat(String url) {
-        try{
-            if (url.contains("url=http") || url.contains(".html")) {
-                return false;
-            }
-            if (sourceBean.getType() == 3) {
-                Spider sp = ApiConfig.get().getCSP(sourceBean);
-                if (sp != null && sp.manualVideoCheck()){
-                    return sp.isVideoFormat(url);
-                }
-            }
-            return VideoParseRuler.checkIsVideoForParse(webUrl, url);
-        }catch (Exception e){
+        if (url.contains("url=http") || url.contains(".html")) {
             return false;
         }
+        if (sourceBean.getType() == 3) {
+            Spider sp = ApiConfig.get().getCSP(sourceBean);
+            if (sp != null && sp.manualVideoCheck())
+                return sp.isVideoFormat(url);
+        }
+        return VideoParseRuler.checkIsVideoForParse(webUrl, url);
     }
 
     class MyWebView extends WebView {
@@ -1351,7 +1315,7 @@ private String videoURL;
         public void setOverScrollMode(int mode) {
             super.setOverScrollMode(mode);
             if (mContext instanceof Activity)
-                AutoSize.autoConvertDensityOfCustomAdapt((Activity) mContext, PlayFragment.this);
+                AutoSize.autoConvertDensityOfCustomAdapt((Activity) mContext, PlayActivity.this);
         }
 
         @Override
@@ -1369,7 +1333,7 @@ private String videoURL;
         public void setOverScrollMode(int mode) {
             super.setOverScrollMode(mode);
             if (mContext instanceof Activity)
-                AutoSize.autoConvertDensityOfCustomAdapt((Activity) mContext, PlayFragment.this);
+                AutoSize.autoConvertDensityOfCustomAdapt((Activity) mContext, PlayActivity.this);
         }
 
         @Override
@@ -1390,7 +1354,7 @@ private String videoURL;
         webView.setFocusableInTouchMode(false);
         webView.clearFocus();
         webView.setOverScrollMode(View.OVER_SCROLL_ALWAYS);
-        requireActivity().addContentView(webView, layoutParams);
+        addContentView(webView, layoutParams);
         /* 添加webView配置 */
         final WebSettings settings = webView.getSettings();
         settings.setNeedInitialFocus(false);
@@ -1426,7 +1390,7 @@ private String videoURL;
         //设置编码
         settings.setDefaultTextEncodingName("utf-8");
         settings.setUserAgentString(webView.getSettings().getUserAgentString());
-//         settings.setUserAgentString(ANDROID_UA);
+        // settings.setUserAgentString(ANDROID_UA);
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
@@ -1481,7 +1445,6 @@ private String videoURL;
             super.onPageFinished(view,url);
             String click=sourceBean.getClickSelector();
             LOG.i("onPageFinished url:" + url);
-
             if(!click.isEmpty()){
                 String selector;
                 if(click.contains(";")){
@@ -1491,7 +1454,6 @@ private String videoURL;
                     selector=click.trim();
                 }
                 String js="$(\""+ selector+"\").click();";
-                LOG.i("javascript:" + js);
                 mSysWebView.loadUrl("javascript:"+js);
             }
         }
@@ -1542,7 +1504,6 @@ private String videoURL;
         @Nullable
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, String url) {
-//            WebResourceResponse response = checkIsVideo(url, new HashMap<>());
             return null;
         }
 
@@ -1584,7 +1545,7 @@ private String videoURL;
         webView.setFocusableInTouchMode(false);
         webView.clearFocus();
         webView.setOverScrollMode(View.OVER_SCROLL_ALWAYS);
-        requireActivity().addContentView(webView, layoutParams);
+        addContentView(webView, layoutParams);
         /* 添加webView配置 */
         final XWalkSettings settings = webView.getSettings();
         settings.setAllowContentAccess(true);
@@ -1692,7 +1653,6 @@ private String videoURL;
                 ad = loadedUrls.get(url);
             }
             if (!ad ) {
-
                 if (checkVideoFormat(url)) {
                     HashMap<String, String> webHeaders = new HashMap<>();
                     Map<String, String> hds = request.getRequestHeaders();
@@ -1735,3 +1695,4 @@ private String videoURL;
     }
 
 }
+
