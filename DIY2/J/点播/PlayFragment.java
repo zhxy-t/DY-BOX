@@ -525,7 +525,7 @@ private String videoURL;
         }
     }
 
-   void playUrl(String url, HashMap<String, String> headers) {
+    void playUrl(String url, HashMap<String, String> headers) {
         LOG.i("playUrl:" + url);
         if(autoRetryCount>0 && url.contains(".m3u8")){
             url="http://home.jundie.top:666/unBom.php?m3u8="+url;
@@ -568,6 +568,7 @@ private String videoURL;
             }
         });
     }
+
 
     private void initSubtitleView() {
         TrackInfo trackInfo = null;
