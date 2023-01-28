@@ -112,6 +112,7 @@ import xyz.doikki.videoplayer.player.ProgressManager;
 import android.content.Intent;
 import android.net.Uri;
 import com.github.tvbox.osc.ui.activity.DetailActivity;
+
 public class PlayFragment extends BaseLazyFragment {
     private MyVideoView mVideoView;
     private TextView mPlayLoadTip;
@@ -201,11 +202,17 @@ private String videoURL;
                     CacheManager.delete(MD5.string2MD5(preProgressKey), 0);
             }
 
-            @Override
+           @Override
             public void playPre() {
-                PlayFragment.this.playPrevious(false);
-            }
-
+                if (mVodInfo.reverseSort) {
+                    PlayFragment.this.playNext(false);
+                } else {
+                    PlayFragment.this.playPrevious();
+                }
+                selectMyAudioTrack();
+            }  
+            
+          
             @Override
             public void changeParse(ParseBean pb) {
                 autoRetryCount = 0;
@@ -784,23 +791,7 @@ private String videoURL;
     private String sourceKey;
     private SourceBean sourceBean;
 
-    private void playNext(boolean isProgress) {
-        boolean hasNext;
-        if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
-            hasNext = false;
-        } else {
-            hasNext = mVodInfo.playIndex + 1 < mVodInfo.seriesMap.get(mVodInfo.playFlag).size();
-        }
-        if (!hasNext) {
-            Toast.makeText(requireContext(), "已经是最后一集了!", Toast.LENGTH_SHORT).show();
-            return;
-        }else {
-            mVodInfo.playIndex++;
-        }
-        play(false);
-    }
-
-    private void playPrevious() {
+ public void playPrevious() {
         boolean hasPre = true;
         if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
             hasPre = false;
@@ -808,17 +799,33 @@ private String videoURL;
             hasPre = mVodInfo.playIndex - 1 >= 0;
         }
         if (!hasPre) {
-            Toast.makeText(requireContext(), "已经是第一集了!", Toast.LENGTH_SHORT).show();
-          // takagen99: 在最后一集结束后自动回到详细页面
-            if (inProgress) {
-                ((DetailActivity) mActivity).toggleFullPreview();
-            }
+            Toast.makeText(requireContext(), "已经是第一集了", Toast.LENGTH_SHORT).show();
             return;
         }
         mVodInfo.playIndex--;
         play(false);
     }
 
+  public void playNext(boolean inProgress) {
+        boolean hasNext = true;
+        if (mVodInfo == null || mVodInfo.seriesMap.get(mVodInfo.playFlag) == null) {
+            hasNext = false;
+        } else {
+            hasNext = mVodInfo.playIndex + 1 < mVodInfo.seriesMap.get(mVodInfo.playFlag).size();
+        }
+        if (!hasNext) {
+            Toast.makeText(requireContext(), "已经是最后一集了", Toast.LENGTH_SHORT).show();
+            // takagen99: 在最后一集结束后自动回到详细页面
+            if (inProgress) {
+                ((DetailActivity) mActivity).toggleFullPreview();
+            }
+            return;
+        }
+        mVodInfo.playIndex++;
+        play(false);
+    }
+    
+  
     private int autoRetryCount = 0;
 
     boolean autoRetry() {
